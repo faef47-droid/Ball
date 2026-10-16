@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ห้องทดลองความน่าจะเป็น 3D | ม.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1030;--ink:#eef1ff;--muted:#a8b2d8;--purple:#7b68ee;--pink:#f36a9b;--teal:#2dd4bf;--gold:#fbbf24;--glass:rgba(20,26,66,.6);--line:rgba(255,255,255,.14)}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(1200px 700px at 15% 0%,#2c2678 0%,#0b1030 55%,#070a22 100%);color:var(--ink);font-family:'Prompt','Noto Sans Thai',system-ui,-apple-system,'Segoe UI',sans-serif;overflow:hidden}
+button,select,input{font-family:inherit}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:14px;height:100dvh;padding:14px}
+.stage{position:relative;border-radius:26px;overflow:hidden;border:1px solid var(--line);background:#0e1230;box-shadow:0 24px 70px #0009;min-height:380px}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+#c:active{cursor:grabbing}
+.chip{position:absolute;left:16px;top:16px;display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;background:rgba(15,20,55,.62);backdrop-filter:blur(14px);border:1px solid var(--line);font-size:.8rem;color:var(--muted);max-width:calc(100% - 32px)}
+.chip b{color:#fff;font-weight:600}
+#hotspots{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hot{position:absolute;left:0;top:0;display:flex;align-items:center;gap:8px;padding:5px 13px 5px 6px;border-radius:999px;border:1px solid #ffffff55;background:rgba(15,20,55,.72);backdrop-filter:blur(10px);color:#fff;font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap;pointer-events:auto;will-change:transform;box-shadow:0 8px 24px #0006}
+.hot .dot{width:18px;height:18px;border-radius:50%;background:var(--c);box-shadow:0 0 0 0 var(--c);animation:pulse 1.8s infinite}
+.hot:hover,.hot:focus-visible{background:rgba(40,48,110,.9);outline:2px solid var(--c);outline-offset:2px}
+@keyframes pulse{0%{box-shadow:0 0 0 0 var(--c)}70%{box-shadow:0 0 0 12px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.toast{position:absolute;left:50%;top:66px;transform:translate(-50%,-14px);opacity:0;pointer-events:none;padding:12px 20px;border-radius:16px;font-weight:600;font-size:.92rem;background:rgba(15,20,55,.82);backdrop-filter:blur(16px);border:1px solid var(--line);transition:.35s;max-width:calc(100% - 32px);text-align:center;box-shadow:0 12px 36px #0007}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.ok{border-color:#2dd4bf99;box-shadow:0 12px 40px #2dd4bf33}
+.toast.no{border-color:#f36a9b88}
+.card{position:absolute;left:16px;top:70px;width:min(340px,calc(100% - 32px));border-radius:22px;background:rgba(14,19,56,.8);backdrop-filter:blur(22px) saturate(150%);border:1px solid var(--line);box-shadow:0 24px 60px #000a;display:none;overflow:hidden;z-index:5}
+.card.show{display:block;animation:cardIn .45s cubic-bezier(.2,.9,.3,1.2)}
+.card::before{content:'';position:absolute;left:0;top:0;right:0;height:4px;background:var(--ac,#7b68ee)}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.94)}to{opacity:1;transform:none}}
+.chead{display:flex;align-items:center;gap:10px;padding:16px 16px 6px}
+.cicon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:1.2rem;background:color-mix(in srgb,var(--ac,#7b68ee) 28%,transparent)}
+.chead h3{margin:0;font-size:1rem;flex:1;line-height:1.3}
+.cx{border:0;background:#ffffff18;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:.85rem}
+.cx:hover{background:#ffffff33}
+.cbody{padding:6px 18px 18px;font-size:.88rem;line-height:1.75;color:#dfe5ff}
+.cbody p{margin:6px 0}
+.cbody .sm{font-size:.8rem;color:var(--muted)}
+.eq{margin:10px 0;padding:11px 14px;border-radius:14px;background:#ffffff12;border:1px dashed #ffffff33;font-weight:600;color:#fff;word-break:break-word}
+.toolbar{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:6px;padding:7px;border-radius:999px;background:rgba(15,20,55,.66);backdrop-filter:blur(16px);border:1px solid var(--line);max-width:calc(100% - 20px);flex-wrap:wrap;justify-content:center}
+.tb{border:0;background:transparent;color:var(--ink);padding:8px 13px;border-radius:999px;font-size:.8rem;font-weight:500;cursor:pointer;transition:.2s;white-space:nowrap}
+.tb:hover{background:#ffffff1f}
+.tb.on{background:linear-gradient(120deg,var(--purple),var(--pink));color:#fff}
+.panel{display:flex;flex-direction:column;min-height:0;border-radius:26px;background:var(--glass);backdrop-filter:blur(24px) saturate(150%);border:1px solid var(--line);box-shadow:0 24px 70px #0008;overflow:hidden}
+.phead{padding:20px 22px 12px;background:linear-gradient(120deg,#5148c9aa,#bd72c966)}
+.phead .tag{display:inline-block;font-size:.72rem;padding:3px 11px;border-radius:999px;border:1px solid #ffffff66;margin-bottom:6px}
+.phead h1{margin:0;font-size:1.35rem;line-height:1.3}
+.phead p{margin:3px 0 0;color:#e6e9ff;font-size:.82rem}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px;border-bottom:1px solid var(--line)}
+.tab{border:0;background:transparent;color:var(--muted);padding:10px 4px;border-radius:12px;font-size:.78rem;font-weight:600;cursor:pointer;transition:.2s}
+.tab:hover{background:#ffffff12;color:#fff}
+.tab.on{background:#ffffff1f;color:#fff;box-shadow:inset 0 -2px 0 var(--pink)}
+.pbody{flex:1;overflow:auto;padding:16px 18px 22px;scrollbar-width:thin;scrollbar-color:#ffffff33 transparent}
+.pane{display:none}
+.pane.on{display:block;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+h2{font-size:1rem;margin:0 0 12px}
+.ctl{background:#ffffff0d;border:1px solid #ffffff14;border-radius:16px;padding:13px 15px;margin-bottom:12px}
+.ctl label,.ctl .lb{display:flex;justify-content:space-between;gap:8px;font-weight:600;font-size:.88rem}
+.ctl output{color:var(--gold)}
+.note{font-size:.76rem;color:var(--muted);margin:5px 0 0;line-height:1.5}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:99px;background:linear-gradient(90deg,var(--purple) var(--fill,50%),#ffffff22 var(--fill,50%));outline:none;margin:14px 0 6px;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:5px solid var(--purple);box-shadow:0 4px 12px #0007}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:5px solid var(--purple)}
+input[type=range]:focus-visible{outline:3px solid #bdb5ff55;outline-offset:4px}
+select{width:100%;margin-top:9px;padding:11px 12px;border-radius:12px;border:1px solid #ffffff2b;background:#ffffff12;color:#fff;font-size:.88rem}
+select option{background:#171c4d;color:#fff}
+select:focus-visible{outline:3px solid #bdb5ff66}
+.swatches{display:flex;gap:10px;margin-top:10px}
+.sw{width:34px;height:34px;border-radius:50%;border:3px solid transparent;background:var(--c);cursor:pointer;box-shadow:inset -4px -5px 8px #0003,0 4px 12px #0005;transition:.2s}
+.sw:hover{transform:scale(1.1)}
+.sw.on{border-color:#fff;transform:scale(1.14)}
+.btn{border:0;border-radius:14px;background:linear-gradient(120deg,var(--purple),var(--pink));color:#fff;padding:12px 18px;font-size:.88rem;font-weight:700;cursor:pointer;box-shadow:0 10px 26px #7b68ee44;transition:.2s}
+.btn:hover{transform:translateY(-2px)}
+.btn:disabled{opacity:.5;cursor:wait;transform:none}
+.btn.ghost{background:#ffffff17;box-shadow:none;border:1px solid #ffffff2a}
+.btn.sm{padding:9px 13px;font-size:.8rem}
+.btn:focus-visible,.tb:focus-visible,.tab:focus-visible,.sw:focus-visible,.cx:focus-visible{outline:3px solid #bdb5ff;outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{padding:13px 14px;border-radius:16px;background:#ffffff0f;border:1px solid #ffffff14}
+.stat small{display:block;color:var(--muted);font-size:.74rem}
+.stat strong{display:block;font-size:1.5rem;margin-top:3px}
+.stat.flash{animation:flash .5s}
+@keyframes flash{0%{background:#7b68ee66}100%{background:#ffffff0f}}
+.c-pink{color:var(--pink)}.c-purple{color:#a99dff}.c-teal{color:var(--teal)}.c-gold{color:var(--gold)}
+.gaugewrap{display:flex;align-items:center;gap:16px;margin:14px 0}
+.gauge{--p:0;width:116px;height:116px;border-radius:50%;background:conic-gradient(var(--pink) calc(var(--p)*1%),#ffffff1c 0);display:grid;place-items:center;position:relative;flex:none;transition:.3s}
+.gauge::after{content:'';position:absolute;inset:12px;border-radius:50%;background:#151b4a}
+.gauge b{position:relative;z-index:1;font-size:1.2rem}
+.formula{flex:1;font-size:.82rem;line-height:1.9}
+.formula .fl{margin:2px 0}
+.formula .fl span{display:inline-block;min-width:44px;color:var(--gold);font-weight:700}
+.formula .big{font-size:.95rem;font-weight:700;color:#fff;margin-top:6px}
+.evtag{display:inline-block;padding:5px 12px;border-radius:999px;background:#7b68ee33;border:1px solid #7b68ee88;font-size:.8rem;font-weight:600;margin-bottom:6px}
+.comp{display:flex;height:22px;border-radius:99px;overflow:hidden;background:#ffffff1a;margin:8px 0}
+.comp div{height:100%;transition:width .35s ease;display:grid;place-items:center;font-size:.68rem;font-weight:700;color:#0b1030;white-space:nowrap;overflow:hidden}
+.barrow{display:grid;grid-template-columns:78px 1fr 54px;align-items:center;gap:10px;margin:10px 0;font-size:.82rem}
+.track{height:14px;background:#ffffff1a;border-radius:99px;overflow:hidden}
+.fill{height:100%;border-radius:99px;transition:width .4s ease}
+.barrow span{text-align:right;color:var(--muted)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.chipbtn{border:1px solid #ffffff2a;background:#ffffff12;color:#fff;padding:8px 13px;border-radius:999px;font-size:.78rem;font-weight:600;cursor:pointer;transition:.2s}
+.chipbtn:hover{background:#ffffff26}
+#spark{width:100%;height:130px;display:block;border-radius:14px;background:#ffffff0b;border:1px solid #ffffff12}
+.tally{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.tally .stat strong{font-size:1.2rem}
+.result{min-height:24px;font-size:.88rem;font-weight:600;margin-top:10px}
+.qi{padding:14px 0;border-top:1px solid #ffffff14}
+.qi:first-child{border-top:0}
+.qi p{margin:0 0 10px;font-weight:600;font-size:.88rem;line-height:1.6}
+.qn{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--purple);font-size:.75rem;margin-right:8px}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.choices label{cursor:pointer}
+.choices input{position:absolute;opacity:0;pointer-events:none}
+.choices span{display:block;padding:8px 14px;border-radius:12px;border:1px solid #ffffff2b;background:#ffffff0f;font-size:.84rem;transition:.2s}
+.choices label:hover span{background:#ffffff1f}
+.choices input:checked+span{background:var(--purple);border-color:#fff;color:#fff}
+.choices input:focus-visible+span{outline:3px solid #bdb5ff;outline-offset:2px}
+.fb{font-size:.82rem;margin-top:8px;line-height:1.6}
+.fb.correct{color:#5eead4}
+.fb.wrong{color:#fda4af}
+.score{font-weight:700;margin-top:14px;font-size:1rem}
+@media(max-width:960px){
+body{overflow:auto}
+.app{display:block;height:auto;padding:10px}
+.stage{height:64vh;min-height:400px;margin-bottom:12px}
+.panel{overflow:visible}
+.pbody{overflow:visible}
+.card{top:auto;bottom:74px;left:10px;width:calc(100% - 20px)}
+.toolbar{border-radius:20px}
+}
+@media(max-width:520px){
+.chip{font-size:.7rem}
+.barrow{grid-template-columns:64px 1fr 48px}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<section class="stage" id="stage">
+<canvas id="c" aria-label="ฉาก 3 มิติ โหลแก้วใส่ลูกบอล"></canvas>
+<div class="chip">🖱️ <span><b>ลาก</b> หมุน • <b>ล้อเมาส์</b> ซูม • <b>คลิกขวา/ลาก 2 นิ้ว</b> แพน • คลิกจุดเรืองแสงเพื่อดูคำอธิบาย</span></div>
+<div id="hotspots">
+<button class="hot" id="hotS" style="--c:#2dd4bf"><span class="dot"></span><span class="lab">S · ผลลัพธ์ทั้งหมด</span></button>
+<button class="hot" id="hotE" style="--c:#f36a9b"><span class="dot"></span><span class="lab">E · เหตุการณ์ที่สนใจ</span></button>
+<button class="hot" id="hotT" style="--c:#fbbf24"><span class="dot"></span><span class="lab">ถาดผลการหยิบ</span></button>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="card" id="card" role="dialog" aria-label="การ์ดคำอธิบาย">
+<div class="chead"><span class="cicon" id="cIcon"></span><h3 id="cTitle"></h3><button class="cx" id="cClose" aria-label="ปิดการ์ด">✕</button></div>
+<div class="cbody" id="cBody"></div>
+</div>
+<div class="toolbar">
+<button class="tb" data-view="front">มุมหน้า</button>
+<button class="tb" data-view="top">มุมบน</button>
+<button class="tb" data-view="side">มุมข้าง</button>
+<button class="tb" id="autoRot">หมุนอัตโนมัติ</button>
+<button class="tb" id="shake">เขย่าโหล</button>
+</div>
+</section>
+<aside class="panel">
+<div class="phead"><span class="tag">คณิตศาสตร์ • ระดับชั้น ม.4</span><h1>🔮 ห้องทดลองความน่าจะเป็น 3D</h1><p>ปรับจำนวนลูกบอล แล้วสำรวจว่า “โอกาส” เปลี่ยนไปอย่างไร</p></div>
+<div class="tabs" role="tablist">
+<button class="tab on" role="tab" aria-selected="true" data-tab="set">⚙️ ตั้งค่า</button>
+<button class="tab" role="tab" aria-selected="false" data-tab="calc">📐 คำนวณ</button>
+<button class="tab" role="tab" aria-selected="false" data-tab="lab">🎲 ทดลอง</button>
+<button class="tab" role="tab" aria-selected="false" data-tab="quiz">🧠 ทดสอบ</button>
+</div>
+<div class="pbody" id="pbody">
+<div class="pane on" id="pane-set">
+<h2>1. ตั้งค่าการทดลอง</h2>
+<div class="ctl"><label for="total">จำนวนลูกบอลทั้งหมด <output id="totalOut">12 ลูก</output></label><input id="total" type="range" min="4" max="30" value="12"><p class="note">เลื่อนเพื่อเพิ่มหรือลดจำนวนลูกบอลในโหล ลูกบอลใหม่จะตกลงมาตามแรงโน้มถ่วง</p></div>
+<div class="ctl"><label for="fav">จำนวนลูกบอลสีที่สนใจ <output id="favOut">4 ลูก</output></label><input id="fav" type="range" min="1" max="12" value="4"><p class="note">จำนวนลูกบอลสีเป้าหมายจะไม่เกินจำนวนทั้งหมด</p></div>
+<div class="ctl"><label for="draw">จำนวนลูกบอลที่หยิบ <output id="drawOut">1 ลูก</output></label><input id="draw" type="range" min="1" max="5" value="1"><p class="note">หยิบโดยไม่ใส่คืน และถือว่าลูกบอลทุกลูกมีโอกาสเท่ากัน</p></div>
+<div class="ctl"><label for="event">เหตุการณ์ที่สนใจ</label><select id="event"><option value="atleast">หยิบได้สีเป้าหมายอย่างน้อย 1 ลูก</option><option value="exact">หยิบได้สีเป้าหมายพอดี 1 ลูก</option><option value="all">หยิบได้สีเป้าหมายทุกลูก</option><option value="none">ไม่ได้สีเป้าหมายเลย</option></select><p class="note">เปลี่ยนเหตุการณ์เพื่อดูจำนวนผลลัพธ์ที่ต้องการ</p></div>
+<div class="ctl"><div class="lb">สีของลูกบอลเป้าหมาย</div><div class="swatches" id="swatches"></div><p class="note">สีอื่น ๆ ในโหลจะแสดงเป็นสีเทาอมฟ้า</p></div>
+</div>
+<div class="pane" id="pane-calc">
+<h2>2. ผลการคำนวณ</h2>
+<span class="evtag" id="evTag"></span>
+<div class="stats">
+<div class="stat" id="stAll"><small>จำนวนผลลัพธ์ทั้งหมด n(S)</small><strong id="allWays" class="c-teal">—</strong></div>
+<div class="stat" id="stFav"><small>จำนวนผลลัพธ์ที่สนใจ n(E)</small><strong id="favWays" class="c-pink">—</strong></div>
+<div class="stat" id="stProb"><small>ความน่าจะเป็น P(E)</small><strong id="prob" class="c-purple">—</strong></div>
+<div class="stat" id="stPct"><small>คิดเป็นร้อยละ</small><strong id="percent" class="c-gold">—</strong></div>
+</div>
+<div class="gaugewrap"><div class="gauge" id="gauge"><b id="gaugeTxt">0%</b></div><div class="formula" id="formula"></div></div>
+<h2>สัดส่วนลูกบอลในโหล</h2>
+<div class="comp" id="comp"></div>
+<div id="bars"></div>
+<p class="note">กราฟแสดงสัดส่วนของลูกบอลสีเป้าหมายและสีอื่นในโหล ปรับค่าแล้วกราฟและฉาก 3D จะเปลี่ยนทันที</p>
+<div class="chips"><button class="chipbtn" data-card="S">📘 n(S) คืออะไร</button><button class="chipbtn" data-card="E">⭐ n(E) คืออะไร</button><button class="chipbtn" data-card="P">🧮 ตีความ P(E)</button></div>
+</div>
+<div class="pane" id="pane-lab">
+<h2>3. ทดลองหยิบลูกบอล</h2>
+<p class="note" style="margin-top:0">กดปุ่มเพื่อสุ่มหยิบลูกบอลจริงในโหลแบบไม่ใส่คืน ลูกบอลจะลอยไปวางบนถาดด้านหน้า</p>
+<div class="row"><button class="btn" id="pick">🎲 สุ่มหยิบลูกบอล</button><button class="btn ghost" id="reset">คืนลูกบอลลงโหล</button></div>
+<p class="result" id="drawResult" aria-live="polite"></p>
+<h2 style="margin-top:18px">ทดลองซ้ำหลายครั้ง</h2>
+<div class="row" style="margin-top:0"><button class="btn ghost sm" data-batch="10">×10 ครั้ง</button><button class="btn ghost sm" data-batch="100">×100 ครั้ง</button><button class="btn ghost sm" data-batch="1000">×1000 ครั้ง</button><button class="btn ghost sm" id="clearTally">ล้างสถิติ</button></div>
+<div class="tally"><div class="stat"><small>จำนวนครั้งที่ทดลอง</small><strong id="tTrials">0</strong></div><div class="stat"><small>เกิดเหตุการณ์</small><strong id="tHits" class="c-teal">0</strong></div><div class="stat"><small>ความถี่สัมพัทธ์</small><strong id="tFreq" class="c-gold">—</strong></div></div>
+<div class="barrow"><b>ทฤษฎี</b><div class="track"><div class="fill" id="bTheory" style="background:var(--teal);width:0"></div></div><span id="bTheoryT">0%</span></div>
+<div class="barrow"><b>การทดลอง</b><div class="track"><div class="fill" id="bExp" style="background:var(--gold);width:0"></div></div><span id="bExpT">0%</span></div>
+<canvas id="spark"></canvas>
+<p class="note">เส้นประสีเขียวคือความน่าจะเป็นตามทฤษฎี เส้นสีเหลืองคือความถี่สัมพัทธ์จากการทดลอง เมื่อทดลองซ้ำมากขึ้น เส้นสีเหลืองจะเข้าใกล้เส้นประ</p>
+</div>
+<div class="pane" id="pane-quiz">
+<h2>4. คำถามท้ายกิจกรรม</h2>
+<p class="note" style="margin-top:0">ตอบให้ครบทุกข้อ แล้วกดตรวจคำตอบเพื่อดูเฉลย</p>
+<div id="quiz"></div>
+<div class="row"><button class="btn" id="checkQuiz">ตรวจคำตอบ</button><button class="btn ghost" id="resetQuiz">ทำใหม่</button></div>
+<div id="quizScore" class="score" aria-live="polite"></div>
+</div>
+</div>
+</aside>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const TH=n=>Number(n).toLocaleString('th-TH');
+const fmt=n=>Number.isInteger(n)?String(n):n.toFixed(4).replace(/0+$/,'').replace(/\.$/,'');
+function choose(n,k){if(k<0||k>n)return 0;k=Math.min(k,n-k);let v=1;for(let i=1;i<=k;i++)v=v*(n-k+i)/i;return Math.round(v);}
+function gcd(a,b){return b?gcd(b,a%b):a;}
+const EVENTS={atleast:'หยิบได้สีเป้าหมายอย่างน้อย 1 ลูก',exact:'หยิบได้สีเป้าหมายพอดี 1 ลูก',all:'หยิบได้สีเป้าหมายทุกลูก',none:'ไม่ได้สีเป้าหมายเลย'};
+const COLORS={'#f36a9b':'ชมพู','#22a99a':'เขียวอมฟ้า','#f2b84b':'เหลือง','#6d5ce8':'ม่วง','#4386e8':'น้ำเงิน'};
+const totalEl=$('total'),favEl=$('fav'),drawEl=$('draw'),evSel=$('event');
+let curColor='#f36a9b';
+let lastResult='';
+function getData(){
+const n=+totalEl.value;
+const r=Math.min(+favEl.value,n);
+const d=Math.min(+drawEl.value,n);
+const ways=choose(n,d);
+let good=0;
+switch(evSel.value){
+case'atleast':good=choose(n,d)-choose(n-r,d);break;
+case'exact':good=choose(r,1)*choose(n-r,d-1);break;
+case'all':good=choose(r,d);break;
+case'none':good=choose(n-r,d);break;
+}
+good=Math.max(0,Math.min(ways,good));
+return {n,r,d,good,ways,p:ways?good/ways:0};
+}
+function isSuccess(count,d){
+switch(evSel.value){
+case'atleast':return count>=1;
+case'exact':return count===1;
+case'all':return count===d;
+default:return count===0;
+}
+}
+function sampleCount(n,r,d){
+const arr=new Array(n);
+for(let i=0;i<n;i++)arr[i]=i<r;
+let c=0;
+for(let i=0;i<d;i++){
+const j=i+Math.floor(Math.random()*(n-i));
+const t=arr[i];arr[i]=arr[j];arr[j]=t;
+if(arr[i])c++;
+}
+return c;
+}
+function exprFor(q){
+const {n,r,d,good}=q;
+let sym='',val='';
+switch(evSel.value){
+case'atleast':sym='C('+n+','+d+') − C('+(n-r)+','+d+')';val=choose(n,d)+' − '+choose(n-r,d);break;
+case'exact':sym='C('+r+',1) × C('+(n-r)+','+(d-1)+')';val=r+' × '+choose(n-r,d-1);break;
+case'all':sym='C('+r+','+d+')';val=String(choose(r,d));break;
+default:sym='C('+(n-r)+','+d+')';val=String(choose(n-r,d));
+}
+let s=sym+' = '+val;
+if(val!==String(good))s+=' = '+TH(good);
+return s;
+}
+const stage=$('stage'),canvas=$('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.15;
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0e1230);
+scene.fog=new THREE.Fog(0x0e1230,24,52);
+const camera=new THREE.PerspectiveCamera(44,1,0.1,120);
+camera.position.set(0,6.2,14);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+controls.dampingFactor=0.08;
+controls.target.set(0,2.2,2.4);
+controls.minDistance=5;
+controls.maxDistance=28;
+controls.maxPolarAngle=Math.PI*0.49;
+controls.enablePan=true;
+controls.screenSpacePanning=true;
+controls.autoRotateSpeed=1.4;
+const hemi=new THREE.HemisphereLight(0xcfd8ff,0x20204a,0.75);
+scene.add(hemi);
+const dir=new THREE.DirectionalLight(0xffffff,1.15);
+dir.position.set(6,13,8);
+dir.castShadow=true;
+dir.shadow.mapSize.set(2048,2048);
+dir.shadow.camera.left=-11;dir.shadow.camera.right=11;dir.shadow.camera.top=11;dir.shadow.camera.bottom=-11;
+dir.shadow.camera.near=0.5;dir.shadow.camera.far=45;
+dir.shadow.bias=-0.0004;
+dir.shadow.radius=3;
+scene.add(dir);
+const pl1=new THREE.PointLight(0x7b68ee,1.3,28);
+pl1.position.set(-8,6,4);
+scene.add(pl1);
+const pl2=new THREE.PointLight(0x2dd4bf,1,28);
+pl2.position.set(8,4,-4);
+scene.add(pl2);
+const pl3=new THREE.PointLight(0xf36a9b,0.7,22);
+pl3.position.set(0,3,9);
+scene.add(pl3);
+const R=2.3,H=4.6,RAD=0.42,TRAY_Z=5.2,MAXB=30;
+const floor=new THREE.Mesh(new THREE.CircleGeometry(10,72),new THREE.MeshStandardMaterial({color:0x1a2150,roughness:0.55,metalness:0.25}));
+floor.rotation.x=-Math.PI/2;
+floor.position.y=-0.18;
+floor.receiveShadow=true;
+scene.add(floor);
+const ring1=new THREE.Mesh(new THREE.RingGeometry(9.5,9.7,96),new THREE.MeshBasicMaterial({color:0x7b68ee,transparent:true,opacity:0.6,side:THREE.DoubleSide}));
+ring1.rotation.x=-Math.PI/2;
+ring1.position.y=-0.17;
+scene.add(ring1);
+const ring2=new THREE.Mesh(new THREE.RingGeometry(3.4,3.46,96),new THREE.MeshBasicMaterial({color:0x2dd4bf,transparent:true,opacity:0.35,side:THREE.DoubleSide}));
+ring2.rotation.x=-Math.PI/2;
+ring2.position.y=-0.17;
+scene.add(ring2);
+const grid=new THREE.GridHelper(14,14,0x3a4488,0x232a5e);
+grid.position.y=-0.17;
+grid.material.transparent=true;
+grid.material.opacity=0.3;
+scene.add(grid);
+const starGeo=new THREE.BufferGeometry();
+const starArr=new Float32Array(450*3);
+for(let i=0;i<450;i++){
+const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI*0.5,rr=32+Math.random()*16;
+starArr[i*3]=Math.cos(a)*Math.sin(b+0.1)*rr;
+starArr[i*3+1]=Math.cos(b)*rr*0.8+2;
+starArr[i*3+2]=Math.sin(a)*Math.sin(b+0.1)*rr;
+}
+starGeo.setAttribute('position',new THREE.BufferAttribute(starArr,3));
+const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:0.28,transparent:true,opacity:0.8,fog:false}));
+scene.add(stars);
+const glassMat=new THREE.MeshPhysicalMaterial({color:0xaec6ff,transparent:true,opacity:0.16,roughness:0.05,metalness:0,clearcoat:1,clearcoatRoughness:0.05,side:THREE.DoubleSide,depthWrite:false});
+const jar=new THREE.Mesh(new THREE.CylinderGeometry(R,R,H,72,1,true),glassMat);
+jar.position.y=H/2;
+scene.add(jar);
+const rim=new THREE.Mesh(new THREE.TorusGeometry(R,0.07,16,96),new THREE.MeshStandardMaterial({color:0xdfe6ff,metalness:0.6,roughness:0.2}));
+rim.rotation.x=Math.PI/2;
+rim.position.y=H;
+scene.add(rim);
+const base=new THREE.Mesh(new THREE.CylinderGeometry(R+0.12,R+0.22,0.18,72),new THREE.MeshStandardMaterial({color:0x2b3475,metalness:0.5,roughness:0.3}));
+base.position.y=-0.09;
+base.receiveShadow=true;
+scene.add(base);
+const glow=new THREE.Mesh(new THREE.RingGeometry(R+0.25,R+0.45,72),new THREE.MeshBasicMaterial({color:0x7b68ee,transparent:true,opacity:0.5,side:THREE.DoubleSide}));
+glow.rotation.x=-Math.PI/2;
+glow.position.y=-0.16;
+scene.add(glow);
+const tray=new THREE.Mesh(new THREE.BoxGeometry(7.6,0.18,2),new THREE.MeshStandardMaterial({color:0x28317a,metalness:0.4,roughness:0.35}));
+tray.position.set(0,-0.09,TRAY_Z);
+tray.receiveShadow=true;
+tray.castShadow=true;
+scene.add(tray);
+const trayEdge=new THREE.Mesh(new THREE.BoxGeometry(7.7,0.04,2.1),new THREE.MeshBasicMaterial({color:0xfbbf24,transparent:true,opacity:0.55}));
+trayEdge.position.set(0,-0.19,TRAY_Z);
+scene.add(trayEdge);
+const slotRings=[];
+for(let i=0;i<5;i++){
+const m=new THREE.Mesh(new THREE.RingGeometry(0.5,0.58,48),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.5,side:THREE.DoubleSide}));
+m.rotation.x=-Math.PI/2;
+m.position.set(0,0.012,TRAY_Z);
+scene.add(m);
+slotRings.push(m);
+}
+const ballGeo=new THREE.SphereGeometry(RAD,40,28);
+const targetMat=new THREE.MeshStandardMaterial({color:0xf36a9b,roughness:0.25,metalness:0.1,emissive:0xf36a9b,emissiveIntensity:0.28});
+const otherMat=new THREE.MeshStandardMaterial({color:0x91a0b8,roughness:0.35,metalness:0.1});
+const balls=[];
+for(let i=0;i<MAXB;i++){
+const mesh=new THREE.Mesh(ballGeo,otherMat);
+mesh.castShadow=true;
+mesh.receiveShadow=true;
+mesh.visible=false;
+scene.add(mesh);
+const b={mesh,v:new THREE.Vector3(),drawn:false,anim:null,idx:i,pulse:0};
+mesh.userData.ball=b;
+balls.push(b);
+}
+let drawnList=[];
+let pending=null;
+function setColor(c){
+curColor=c;
+targetMat.color.set(c);
+targetMat.emissive.set(c);
+document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',s.dataset.c===c));
+}
+function applyMaterials(r){
+for(let i=0;i<MAXB;i++)balls[i].mesh.material=i<r?targetMat:otherMat;
+}
+function spawn(b,k){
+const a=Math.random()*Math.PI*2,rad=Math.random()*(R-RAD-0.3)*0.6;
+b.mesh.position.set(Math.cos(a)*rad,H+1+k*0.5,Math.sin(a)*rad);
+b.v.set((Math.random()-0.5)*0.5,-2,(Math.random()-0.5)*0.5);
+b.mesh.scale.setScalar(1);
+}
+function syncBalls(n){
+let k=0;
+for(let i=0;i<MAXB;i++){
+const b=balls[i];
+if(i<n){
+if(!b.mesh.visible){b.mesh.visible=true;b.drawn=false;b.anim=null;spawn(b,k++);}
+}else{
+b.mesh.visible=false;b.drawn=false;b.anim=null;
+}
+}
+}
+function clearDrawn(){
+const n=+totalEl.value;
+for(const b of drawnList){
+b.drawn=false;b.anim=null;b.mesh.scale.setScalar(1);
+if(b.idx<n&&b.mesh.visible)spawn(b,Math.random()*3);
+}
+drawnList=[];
+pending=null;
+$('pick').disabled=false;
+hideToast();
+$('drawResult').textContent='';
+}
+function stepPhysics(dt){
+const act=[];
+for(const b of balls)if(b.mesh.visible&&!b.drawn)act.push(b);
+const lim=R-RAD;
+for(const b of act){
+const p=b.mesh.position,v=b.v;
+v.y-=18*dt;
+p.addScaledVector(v,dt);
+const rr=Math.hypot(p.x,p.z);
+if(rr>lim){
+const nx=p.x/rr,nz=p.z/rr;
+p.x=nx*lim;p.z=nz*lim;
+const vn=v.x*nx+v.z*nz;
+if(vn>0){const rest=vn>1?0.35:0;v.x-=(1+rest)*vn*nx;v.z-=(1+rest)*vn*nz;}
+}
+if(p.y<RAD){
+p.y=RAD;
+if(v.y<0){v.y=-v.y*(-v.y>1.2?0.3:0);}
+v.x*=0.96;v.z*=0.96;
+}
+v.multiplyScalar(0.998);
+}
+const md=RAD*2;
+for(let it=0;it<2;it++){
+for(let i=0;i<act.length;i++){
+const a=act[i];
+for(let j=i+1;j<act.length;j++){
+const c=act[j];
+let dx=c.mesh.position.x-a.mesh.position.x,dy=c.mesh.position.y-a.mesh.position.y,dz=c.mesh.position.z-a.mesh.position.z;
+const d2=dx*dx+dy*dy+dz*dz;
+if(d2>=md*md)continue;
+let d=Math.sqrt(d2);
+if(d<1e-4){dx=(Math.random()-0.5)*0.01;dy=0.01;dz=(Math.random()-0.5)*0.01;d=Math.sqrt(dx*dx+dy*dy+dz*dz);}
+const nx=dx/d,ny=dy/d,nz=dz/d;
+const ov=(md-d)*0.5;
+a.mesh.position.x-=nx*ov;a.mesh.position.y-=ny*ov;a.mesh.position.z-=nz*ov;
+c.mesh.position.x+=nx*ov;c.mesh.position.y+=ny*ov;c.mesh.position.z+=nz*ov;
+const rv=(c.v.x-a.v.x)*nx+(c.v.y-a.v.y)*ny+(c.v.z-a.v.z)*nz;
+if(rv<0){
+const e=rv<-1?0.3:0;
+const imp=-(1+e)*rv*0.5;
+a.v.x-=imp*nx;a.v.y-=imp*ny;a.v.z-=imp*nz;
+c.v.x+=imp*nx;c.v.y+=imp*ny;c.v.z+=imp*nz;
+}
+}
+}
+}
+for(const b of act){
+const p=b.mesh.position;
+if(p.y<RAD)p.y=RAD;
+const rr=Math.hypot(p.x,p.z);
+if(rr>lim){p.x*=lim/rr;p.z*=lim/rr;}
+}
+}
+function slotPos(k,d){
+return new THREE.Vector3((k-(d-1)/2)*1.3,RAD,TRAY_Z);
+}
+function refreshTray(d){
+for(let i=0;i<5;i++){
+slotRings[i].visible=i<d;
+slotRings[i].position.x=(i-(d-1)/2)*1.3;
+}
+}
+function doDraw(){
+const q=getData();
+clearDrawn();
+const ids=Array.from({length:q.n},(_,i)=>i);
+for(let i=q.n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=ids[i];ids[i]=ids[j];ids[j]=t;}
+const pick=ids.slice(0,q.d);
+const count=pick.filter(i=>i<q.r).length;
+pending={left:q.d,count,d:q.d};
+$('pick').disabled=true;
+$('drawResult').textContent='';
+pick.forEach((id,k)=>{
+const b=balls[id];
+b.drawn=true;
+b.v.set(0,0,0);
+b.anim={t:-k*0.28,dur:1,from:b.mesh.position.clone(),to:slotPos(k,q.d)};
+drawnList.push(b);
+});
+}
+function updateAnims(dt){
+for(const b of drawnList){
+const a=b.anim;
+if(!a)continue;
+a.t+=dt;
+if(a.t<0)continue;
+const k=Math.min(a.t/a.dur,1);
+const e=k<0.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+b.mesh.position.lerpVectors(a.from,a.to,e);
+b.mesh.position.y+=Math.sin(Math.PI*e)*3.4;
+b.mesh.scale.setScalar(1+0.35*Math.sin(Math.PI*e));
+if(k>=1){
+b.mesh.position.copy(a.to);
+b.mesh.scale.setScalar(1);
+b.anim=null;
+landed();
+}
+}
+for(const b of balls){
+if(b.pulse>0&&!b.anim){
+b.pulse-=dt;
+const k=Math.max(b.pulse,0)/0.5;
+b.mesh.scale.setScalar(b.pulse<=0?1:1+0.35*Math.sin(Math.PI*(1-k)));
+}
+}
+}
+const hist=[];
+const tally={trials:0,hits:0};
+function landed(){
+if(!pending)return;
+pending.left--;
+if(pending.left>0)return;
+const q=getData();
+const ok=isSuccess(pending.count,pending.d);
+tally.trials++;
+if(ok)tally.hits++;
+hist.push(tally.hits/tally.trials);
+const msg='ผลการหยิบ: ได้สีเป้าหมาย '+pending.count+' ลูก จาก '+pending.d+' ลูก — '+(ok?'เกิดเหตุการณ์ที่สนใจ 🎉':'ไม่เกิดเหตุการณ์ที่สนใจ');
+lastResult=msg;
+$('drawResult').textContent=msg;
+$('drawResult').style.color=ok?'#5eead4':'#fda4af';
+showToast(msg,ok);
+if(ok)burst(new THREE.Vector3(0,1.2,TRAY_Z),curColor);
+pending=null;
+$('pick').disabled=false;
+renderTally();
+}
+let toastTimer=null;
+function showToast(msg,ok){
+const t=$('toast');
+t.textContent=msg;
+t.className='toast show '+(ok?'ok':'no');
+clearTimeout(toastTimer);
+toastTimer=setTimeout(hideToast,7000);
+}
+function hideToast(){
+$('toast').className='toast';
+}
+const bursts=[];
+function burst(pos,color){
+const cnt=90;
+const g=new THREE.BufferGeometry();
+const arr=new Float32Array(cnt*3);
+const vel=[];
+for(let i=0;i<cnt;i++){
+arr[i*3]=pos.x;arr[i*3+1]=pos.y;arr[i*3+2]=pos.z;
+const a=Math.random()*Math.PI*2,s=2+Math.random()*4;
+vel.push(new THREE.Vector3(Math.cos(a)*s,3+Math.random()*5,Math.sin(a)*s));
+}
+g.setAttribute('position',new THREE.BufferAttribute(arr,3));
+const m=new THREE.PointsMaterial({color,size:0.22,transparent:true,opacity:1,depthWrite:false,blending:THREE.AdditiveBlending});
+const pts=new THREE.Points(g,m);
+pts.frustumCulled=false;
+scene.add(pts);
+bursts.push({pts,vel,life:0});
+}
+function updateBursts(dt){
+for(let i=bursts.length-1;i>=0;i--){
+const b=bursts[i];
+b.life+=dt;
+const pa=b.pts.geometry.attributes.position;
+for(let j=0;j<b.vel.length;j++){
+b.vel[j].y-=9*dt;
+pa.array[j*3]+=b.vel[j].x*dt;
+pa.array[j*3+1]+=b.vel[j].y*dt;
+pa.array[j*3+2]+=b.vel[j].z*dt;
+}
+pa.needsUpdate=true;
+b.pts.material.opacity=Math.max(0,1-b.life/1.6);
+if(b.life>1.6){
+scene.remove(b.pts);
+b.pts.geometry.dispose();
+b.pts.material.dispose();
+bursts.splice(i,1);
+}
+}
+}
+const VIEWS={
+front:{p:new THREE.Vector3(0,6.2,14),t:new THREE.Vector3(0,2.2,2.4)},
+top:{p:new THREE.Vector3(0,17,6.5),t:new THREE.Vector3(0,0,2.6)},
+side:{p:new THREE.Vector3(13,5.5,7),t:new THREE.Vector3(0,2,2.4)}
+};
+let camAnim=null;
+function goView(name){
+const v=VIEWS[name];
+camAnim={t:0,fp:camera.position.clone(),ft:controls.target.clone(),tp:v.p.clone(),tt:v.t.clone()};
+}
+controls.addEventListener('start',()=>{camAnim=null;});
+const cards={
+S:()=>{
+const q=getData();
+return {icon:'📘',accent:'#2dd4bf',title:'ผลลัพธ์ทั้งหมด n(S)',body:'<p>โหลนี้มีลูกบอล <b>'+q.n+'</b> ลูก เมื่อหยิบ <b>'+q.d+'</b> ลูก โดยไม่ใส่คืนและไม่คำนึงถึงลำดับ จำนวนวิธีที่เป็นไปได้ทั้งหมดคือ</p><div class="eq">n(S) = C('+q.n+', '+q.d+') = '+TH(q.ways)+'</div><p class="sm">ทุกวิธีมีโอกาสเกิดขึ้นเท่ากัน จึงใช้สูตร P(E) = n(E) ÷ n(S) ได้</p>'};
+},
+E:()=>{
+const q=getData();
+return {icon:'⭐',accent:'#f36a9b',title:'เหตุการณ์ที่สนใจ n(E)',body:'<p>เหตุการณ์ E คือ “<b>'+EVENTS[evSel.value]+'</b>” ในโหลมีลูกบอลสีเป้าหมาย <b>'+q.r+'</b> ลูก และสีอื่น <b>'+(q.n-q.r)+'</b> ลูก</p><div class="eq">n(E) = '+exprFor(q)+'</div><p class="sm">C(n, r) อ่านว่า “จำนวนวิธีเลือก r ชิ้นจาก n ชิ้น”</p>'};
+},
+T:()=>{
+return {icon:'🍽️',accent:'#fbbf24',title:'ถาดผลการหยิบ',body:'<p>ลูกบอลที่หยิบได้จะลอยมาวางบนถาดนี้ และ <b>ไม่ถูกใส่คืน</b> ลงโหลจนกว่าจะกดคืนลูกบอล จึงทำให้จำนวนลูกบอลที่เหลือในโหลลดลงเรื่อย ๆ</p><p>ช่องวงแหวนบนถาดแสดงจำนวนลูกบอลที่ตั้งให้หยิบ</p>'+(lastResult?'<div class="eq">'+lastResult+'</div>':'<p class="sm">ยังไม่มีผลการหยิบ ลองกดปุ่ม “สุ่มหยิบลูกบอล” ในแท็บทดลอง</p>')};
+},
+P:()=>{
+const q=getData();
+const g=gcd(q.good,q.ways)||1;
+let frac=q.good===0?'0':(q.good===q.ways?'1':(q.good/g)+'/'+(q.ways/g));
+return {icon:'🧮',accent:'#7b68ee',title:'ตีความความน่าจะเป็น P(E)',body:'<div class="eq">P(E) = '+TH(q.good)+' ÷ '+TH(q.ways)+' = '+frac+' ≈ '+fmt(q.p)+'</div><p>หมายความว่า ถ้าทำการทดลองนี้ซ้ำ 100 ครั้ง คาดว่าจะเกิดเหตุการณ์ E ประมาณ <b>'+Math.round(q.p*100)+'</b> ครั้ง</p><p class="sm">ค่าความน่าจะเป็นอยู่ระหว่าง 0 ถึง 1 เสมอ</p>'};
+}
+};
+function openCard(obj){
+const c=$('card');
+$('cIcon').textContent=obj.icon;
+$('cTitle').textContent=obj.title;
+$('cBody').innerHTML=obj.body;
+c.style.setProperty('--ac',obj.accent);
+c.classList.remove('show');
+void c.offsetWidth;
+c.classList.add('show');
+}
+function openKey(k){openCard(cards[k]());}
+function closeCard(){$('card').classList.remove('show');}
+$('cClose').addEventListener('click',closeCard);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCard();});
+$('hotS').addEventListener('click',()=>openKey('S'));
+$('hotE').addEventListener('click',()=>openKey('E'));
+$('hotT').addEventListener('click',()=>openKey('T'));
+document.querySelectorAll('[data-card]').forEach(b=>b.addEventListener('click',()=>openKey(b.dataset.card)));
+const raycaster=new THREE.Raycaster();
+const ndc=new THREE.Vector2();
+let downPt=null;
+canvas.addEventListener('pointerdown',e=>{downPt={x:e.clientX,y:e.clientY};});
+canvas.addEventListener('pointerup',e=>{
+if(!downPt)return;
+const dx=e.clientX-downPt.x,dy=e.clientY-downPt.y;
+downPt=null;
+if(dx*dx+dy*dy>25)return;
+const rect=canvas.getBoundingClientRect();
+ndc.set(((e.clientX-rect.left)/rect.width)*2-1,-((e.clientY-rect.top)/rect.height)*2+1);
+raycaster.setFromCamera(ndc,camera);
+const hit=raycaster.intersectObjects(balls.filter(b=>b.mesh.visible).map(b=>b.mesh),false);
+if(!hit.length)return;
+const b=hit[0].object.userData.ball;
+b.pulse=0.5;
+const q=getData();
+const isT=b.idx<q.r;
+openCard({icon:isT?'⭐':'⚪',accent:isT?curColor:'#91a0b8',title:isT?'ลูกบอลสีเป้าหมาย ('+COLORS[curColor]+')':'ลูกบอลสีอื่น',body:isT?'<p>ลูกบอลสีเป้าหมายมีทั้งหมด <b>'+q.r+'</b> ลูก จากทั้งหมด <b>'+q.n+'</b> ลูก</p><div class="eq">P(หยิบ 1 ลูกได้สีนี้) = '+q.r+'/'+q.n+' = '+fmt(q.r/q.n)+'</div>':'<p>ลูกบอลสีอื่นมีทั้งหมด <b>'+(q.n-q.r)+'</b> ลูก จากทั้งหมด <b>'+q.n+'</b> ลูก</p><div class="eq">P(หยิบ 1 ลูกได้สีอื่น) = '+(q.n-q.r)+'/'+q.n+' = '+fmt((q.n-q.r)/q.n)+'</div>'});
+});
+const anchorE=new THREE.Vector3(0,H*0.5,0);
+function projectTo(el,vec){
+const v=vec.clone().project(camera);
+const w=stage.clientWidth,h=stage.clientHeight;
+const x=(v.x*0.5+0.5)*w,y=(-v.y*0.5+0.5)*h;
+const vis=v.z<1&&x>-60&&x<w+60&&y>-40&&y<h+40;
+el.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px) translate(-50%,-50%)';
+el.style.opacity=vis?'1':'0';
+el.style.pointerEvents=vis?'auto':'none';
+}
+const anchorS=new THREE.Vector3(-R-0.2,H,0);
+const anchorT=new THREE.Vector3(0,1.5,TRAY_Z);
+function placeHotspots(){
+const q=getData();
+let cx=0,cy=0,cz=0,cnt=0;
+for(let i=0;i<q.r;i++){
+const b=balls[i];
+if(b.mesh.visible&&!b.drawn){cx+=b.mesh.position.x;cy+=b.mesh.position.y;cz+=b.mesh.position.z;cnt++;}
+}
+const tgt=cnt?new THREE.Vector3(cx/cnt,cy/cnt+1.1,cz/cnt):new THREE.Vector3(0,H*0.5,0);
+anchorE.lerp(tgt,0.1);
+projectTo($('hotS'),anchorS);
+projectTo($('hotE'),anchorE);
+projectTo($('hotT'),anchorT);
+}
+function resize(){
+const w=stage.clientWidth,h=stage.clientHeight;
+if(!w||!h)return;
+renderer.setSize(w,h,false);
+camera.aspect=w/h;
+camera.fov=w/h<0.85?58:44;
+camera.updateProjectionMatrix();
+drawSpark();
+}
+new ResizeObserver(resize).observe(stage);
+function setFill(inp){
+const mn=+inp.min,mx=+inp.max;
+inp.style.setProperty('--fill',((inp.value-mn)/((mx-mn)||1)*100)+'%');
+}
+function syncControls(){
+const n=+totalEl.value;
+favEl.max=n;
+if(+favEl.value>n)favEl.value=n;
+drawEl.max=Math.min(5,n);
+if(+drawEl.value>+drawEl.max)drawEl.value=drawEl.max;
+$('totalOut').textContent=n+' ลูก';
+$('favOut').textContent=favEl.value+' ลูก';
+$('drawOut').textContent=drawEl.value+' ลูก';
+setFill(totalEl);setFill(favEl);setFill(drawEl);
+}
+function flash(id){
+const e=$(id);
+e.classList.remove('flash');
+void e.offsetWidth;
+e.classList.add('flash');
+}
+function updateUI(){
+const q=getData();
+$('evTag').textContent='เหตุการณ์: '+EVENTS[evSel.value];
+$('allWays').textContent=TH(q.ways);
+$('favWays').textContent=TH(q.good);
+$('prob').textContent=fmt(q.p);
+$('percent').textContent=(q.p*100).toFixed(2)+'%';
+['stAll','stFav','stProb','stPct'].forEach(flash);
+$('gauge').style.setProperty('--p',(q.p*100).toFixed(2));
+$('gaugeTxt').textContent=(q.p*100).toFixed(1)+'%';
+const g=gcd(q.good,q.ways)||1;
+const frac=q.good===0?'0':(q.good===q.ways?'1':(g>1?(q.good/g)+'/'+(q.ways/g)+' = ':''));
+$('formula').innerHTML='<div class="fl"><span>n(S)</span> = C('+q.n+','+q.d+') = <b>'+TH(q.ways)+'</b></div><div class="fl"><span>n(E)</span> = '+exprFor(q)+'</div><div class="fl big">P(E) = '+TH(q.good)+' / '+TH(q.ways)+' = '+(q.good===0||q.good===q.ways?'':frac)+fmt(q.p)+'</div>';
+const tp=q.r/q.n*100,op=100-tp;
+$('comp').innerHTML='<div style="width:'+tp+'%;background:'+curColor+'">'+(tp>=14?q.r+' ลูก':'')+'</div><div style="width:'+op+'%;background:#91a0b8">'+(op>=14?(q.n-q.r)+' ลูก':'')+'</div>';
+$('bars').innerHTML='<div class="barrow"><b>สีเป้าหมาย</b><div class="track"><div class="fill" style="width:'+tp+'%;background:'+curColor+'"></div></div><span>'+tp.toFixed(1)+'%</span></div><div class="barrow"><b>สีอื่น</b><div class="track"><div class="fill" style="width:'+op+'%;background:#91a0b8"></div></div><span>'+op.toFixed(1)+'%</span></div>';
+renderTally();
+}
+function renderTally(){
+const q=getData();
+$('tTrials').textContent=TH(tally.trials);
+$('tHits').textContent=TH(tally.hits);
+const f=tally.trials?tally.hits/tally.trials:0;
+$('tFreq').textContent=tally.trials?fmt(+f.toFixed(4)):'—';
+$('bTheory').style.width=(q.p*100)+'%';
+$('bTheoryT').textContent=(q.p*100).toFixed(1)+'%';
+$('bExp').style.width=(f*100)+'%';
+$('bExpT').textContent=(f*100).toFixed(1)+'%';
+drawSpark();
+}
+function resetTally(){
+tally.trials=0;tally.hits=0;hist.length=0;
+}
+function drawSpark(){
+const c=$('spark');
+const w=c.clientWidth,h=c.clientHeight;
+if(!w||!h)return;
+const dpr=Math.min(window.devicePixelRatio||1,2);
+c.width=w*dpr;c.height=h*dpr;
+const g=c.getContext('2d');
+g.setTransform(dpr,0,0,dpr,0,0);
+g.clearRect(0,0,w,h);
+const pad=10;
+const y=v=>h-pad-v*(h-2*pad);
+g.strokeStyle='rgba(255,255,255,.12)';
+g.lineWidth=1;
+[0,0.5,1].forEach(v=>{g.beginPath();g.moveTo(pad,y(v));g.lineTo(w-pad,y(v));g.stroke();});
+g.fillStyle='rgba(255,255,255,.5)';
+g.font='10px sans-serif';
+g.fillText('1',2,y(1)+3);g.fillText('0',2,y(0)+3);
+const q=getData();
+g.setLineDash([6,5]);
+g.strokeStyle='#2dd4bf';
+g.lineWidth=2;
+g.beginPath();g.moveTo(pad,y(q.p));g.lineTo(w-pad,y(q.p));g.stroke();
+g.setLineDash([]);
+if(hist.length>1){
+g.strokeStyle='#fbbf24';
+g.lineWidth=2;
+g.beginPath();
+const len=hist.length;
+const step=Math.max(1,Math.floor(len/600));
+let first=true;
+for(let i=0;i<len;i+=step){
+const x=pad+(i/(len-1))*(w-2*pad);
+if(first){g.moveTo(x,y(hist[i]));first=false;}else g.lineTo(x,y(hist[i]));
+}
+g.lineTo(w-pad,y(hist[len-1]));
+g.stroke();
+}else if(hist.length===1){
+g.fillStyle='#fbbf24';
+g.beginPath();g.arc(w/2,y(hist[0]),4,0,Math.PI*2);g.fill();
+}
+}
+function runBatch(k){
+const q=getData();
+for(let i=0;i<k;i++){
+const c=sampleCount(q.n,q.r,q.d);
+tally.trials++;
+if(isSuccess(c,q.d))tally.hits++;
+hist.push(tally.hits/tally.trials);
+}
+if(hist.length>4000){
+const t=hist.filter((_,i)=>i%2===0);
+hist.length=0;
+t.forEach(v=>hist.push(v));
+}
+renderTally();
+}
+function onParams(full){
+syncControls();
+const q=getData();
+if(full){
+clearDrawn();
+syncBalls(q.n);
+}else{
+hideToast();
+}
+applyMaterials(q.r);
+refreshTray(q.d);
+resetTally();
+updateUI();
+}
+[totalEl,favEl,drawEl].forEach(e=>e.addEventListener('input',()=>onParams(true)));
+evSel.addEventListener('change',()=>onParams(false));
+$('swatches').innerHTML=Object.keys(COLORS).map(c=>'<button class="sw" data-c="'+c+'" style="--c:'+c+'" title="'+COLORS[c]+'" aria-label="'+COLORS[c]+'"></button>').join('');
+document.querySelectorAll('.sw').forEach(s=>s.addEventListener('click',()=>{setColor(s.dataset.c);updateUI();}));
+$('pick').addEventListener('click',doDraw);
+$('reset').addEventListener('click',clearDrawn);
+document.querySelectorAll('[data-batch]').forEach(b=>b.addEventListener('click',()=>runBatch(+b.dataset.batch)));
+$('clearTally').addEventListener('click',()=>{resetTally();renderTally();});
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.view)));
+$('autoRot').addEventListener('click',e=>{
+controls.autoRotate=!controls.autoRotate;
+e.currentTarget.classList.toggle('on',controls.autoRotate);
+});
+$('shake').addEventListener('click',()=>{
+for(const b of balls){
+if(b.mesh.visible&&!b.drawn){
+b.v.x+=(Math.random()-0.5)*6;
+b.v.y+=4+Math.random()*6;
+b.v.z+=(Math.random()-0.5)*6;
+}
+}
+});
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+document.querySelectorAll('.tab').forEach(x=>{x.classList.toggle('on',x===t);x.setAttribute('aria-selected',String(x===t));});
+document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='pane-'+t.dataset.tab));
+if(t.dataset.tab==='lab')drawSpark();
+$('pbody').scrollTop=0;
+}));
+const Q=[
+{q:'ถ้ามีผลลัพธ์ที่เป็นไปได้ทั้งหมด 10 แบบ และเหตุการณ์ที่สนใจมี 3 แบบ ความน่าจะเป็นเท่าใด?',a:['3/10','10/3','3/7'],c:0,why:'P(E) = จำนวนผลลัพธ์ที่สนใจ ÷ จำนวนผลลัพธ์ทั้งหมด = 3/10 = 0.3'},
+{q:'ในถุงมีลูกบอลสีแดง 2 ลูก และสีน้ำเงิน 2 ลูก หยิบ 1 ลูก โอกาสได้สีแดงเท่าใด?',a:['1/4','1/2','3/4'],c:1,why:'มีทั้งหมด 4 ลูก และสีแดง 2 ลูก จึงได้ P(แดง) = 2/4 = 1/2'},
+{q:'เมื่อหยิบลูกบอล 1 ลูกจากถุงที่มีแต่ลูกบอลสีเขียว ความน่าจะเป็นที่จะได้สีเขียวคือเท่าใด?',a:['0','1/2','1'],c:2,why:'ผลลัพธ์ทุกแบบเป็นสีเขียว เหตุการณ์จึงเกิดแน่นอน P(เขียว) = 1'},
+{q:'หยิบลูกบอล 2 ลูกพร้อมกันจากโหลที่มีลูกบอล 5 ลูก จะมีจำนวนผลลัพธ์ทั้งหมดกี่แบบ?',a:['5 แบบ','10 แบบ','20 แบบ'],c:1,why:'n(S) = C(5,2) = (5 × 4) ÷ (2 × 1) = 10 แบบ'},
+{q:'ค่าความน่าจะเป็นของเหตุการณ์ใด ๆ ต้องอยู่ในช่วงใด?',a:['0 ถึง 1','−1 ถึง 1','มากกว่า 1 ได้'],c:0,why:'จำนวนผลลัพธ์ที่สนใจไม่เกินจำนวนผลลัพธ์ทั้งหมด จึงได้ 0 ≤ P(E) ≤ 1'}
+];
+function renderQuiz(){
+$('quiz').innerHTML=Q.map((q,i)=>'<div class="qi"><p><span class="qn">'+(i+1)+'</span>'+q.q+'</p><div class="choices">'+q.a.map((a,j)=>'<label><input type="radio" name="q'+i+'" value="'+j+'"><span>'+a+'</span></label>').join('')+'</div><div class="fb" id="fb'+i+'"></div></div>').join('');
+$('quizScore').textContent='';
+}
+$('checkQuiz').addEventListener('click',()=>{
+let score=0;
+Q.forEach((q,i)=>{
+const sel=document.querySelector('input[name="q'+i+'"]:checked');
+const fb=$('fb'+i);
+if(sel&&+sel.value===q.c){
+score++;
+fb.className='fb correct';
+fb.textContent='✅ ถูกต้อง! '+q.why;
+}else{
+fb.className='fb wrong';
+fb.textContent=(sel?'❌ ยังไม่ถูก ':'⚠️ ยังไม่ได้เลือกคำตอบ ')+'เฉลย: '+q.a[q.c]+' — '+q.why;
+}
+});
+const msg=score===Q.length?'เยี่ยมมาก! 🏆':(score>=3?'ทำได้ดี 👍':'ลองทบทวนอีกครั้งนะ 💪');
+$('quizScore').textContent='คะแนนของคุณ '+score+' / '+Q.length+' ข้อ — '+msg;
+});
+$('resetQuiz').addEventListener('click',renderQuiz);
+let last=performance.now(),acc=0;
+function loop(now){
+requestAnimationFrame(loop);
+const dt=Math.min((now-last)/1000,0.05);
+last=now;
+acc+=dt;
+let steps=0;
+while(acc>=1/120&&steps<4){stepPhysics(1/120);acc-=1/120;steps++;}
+if(steps===4)acc=0;
+updateAnims(dt);
+updateBursts(dt);
+if(camAnim){
+camAnim.t+=dt/1.1;
+const k=Math.min(camAnim.t,1),e=1-Math.pow(1-k,3);
+camera.position.lerpVectors(camAnim.fp,camAnim.tp,e);
+controls.target.lerpVectors(camAnim.ft,camAnim.tt,e);
+if(k>=1)camAnim=null;
+}
+stars.rotation.y+=dt*0.01;
+ring2.rotation.z+=dt*0.1;
+controls.update();
+placeHotspots();
+renderer.render(scene,camera);
+}
+setColor(curColor);
+syncControls();
+syncBalls(+totalEl.value);
+applyMaterials(getData().r);
+refreshTray(getData().d);
+renderQuiz();
+updateUI();
+resize();
+requestAnimationFrame(t=>{last=t;loop(t);});
+</script>
+</body>
+</html>
